@@ -9,7 +9,4 @@ mysql_user: "wordpress"
 mysql_password: "wordpres123"
 
 #HTTP Settings
-http_host: "wordpress"
-http_conf: "your_domain.conf"
 http_port: "80"
-document_root: "/vagrant"

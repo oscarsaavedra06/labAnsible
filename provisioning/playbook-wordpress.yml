@@ -106,7 +106,7 @@
 
     - name: Creates directory
       file:
-        path: /srv/www
+        path: /var/www
         state: directory
         owner: www-data
         group: www-data
@@ -115,31 +115,31 @@
     - name: Download and unpack latest WordPress
       unarchive:
         src: https://wordpress.org/latest.tar.gz
-        dest: "/srv/www"
+        dest: "/var/www"
         remote_src: yes
-        creates: "/srv/www/wordpress"
+        creates: "/var/www/wordpress"
       tags: [ wordpress ]
 
-    # - name: Set ownership
-    #   file:
-    #     path: "/srv/www"
-    #     state: directory
-    #     recurse: yes
-    #     owner: www-data
-    #     group: www-data
-    #   tags: [ wordpress ]
+    - name: Set ownership
+      file:
+        path: "/var/www"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+      tags: [ wordpress ]
 
     - name: Set permissions for directories
-      shell: "/usr/bin/find /srv/www/wordpress/ -type d -exec chmod 750 {} \\;"
+      shell: "/usr/bin/find /var/www/wordpress/ -type d -exec chmod 777 {} \\;"
       tags: [ wordpress ]
 
     - name: Set permissions for files
-      shell: "/usr/bin/find /srv/www/wordpress/ -type f -exec chmod 640 {} \\;"
+      shell: "/usr/bin/find /var/www/wordpress/ -type f -exec chmod 777 {} \\;"
       tags: [ wordpress ]
 
     - name: Set up Wordpress VirtualHost
       template:
-        src: "files/wp-config.conf.j2"
+        src: "files/wp-host.conf.j2"
         dest: "/etc/apache2/sites-available/wordpress.conf"
       notify: Reload Apache
       tags: [ wordpress ]
@@ -162,7 +162,15 @@
     - name: Set up wp-config
       template:
         src: "files/wp-config.php.j2"
-        dest: "/srv/www/wordpress/wp-config.php"
+        dest: "/var/www/wordpress/wp-config.php"
+      tags: [ wordpress ]
+
+    - name: Set up wp-cli
+      shell: /usr/bin/sudo curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && sudo chmod +x wp-cli.phar && sudo mv wp-cli.phar /usr/local/bin/wp
+      tags: [ wordpress ]
+
+    - name: Create post via wp-cli
+      shell: /usr/bin/sudo -u vagrant -i -- wp core install  --path=/var/www/wordpress --url=http://localhost:8084 --title=Ansible_y_Wordpress --admin_user=admin12 --admin_password=abc123 --admin_email=oscarsaavedra06@gmail.com
       tags: [ wordpress ]
 
   handlers:
@@ -175,3 +183,5 @@
       service:
         name: apache2
         state: restarted
+
+  
